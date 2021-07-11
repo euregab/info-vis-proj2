@@ -1,0 +1,19 @@
+div.header {
+    text-align: center;
+    font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+    margin-bottom: 10px;
+}
+
+div.draw {
+    margin: auto 100px;
+    margin-top: 25px;
+    font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+    background: lightgrey;
+    border-style: solid
+}
+
+svg {
+    display: block;
+    margin: auto;
+    background: lightpink;
+}
