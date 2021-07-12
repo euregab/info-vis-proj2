@@ -36,9 +36,12 @@ function getPositions(tree){
     //everytime a horizontal child-node is expanded, its coordinates are added to this array
     let globalLedges = []
 
+    //true if the node is a left node
+    let isFromAbove = true
+
     let pointer = tree
 
-    localGetPositions(pointer, currCoordinates, prevCoordinates)
+    localGetPositions(pointer, currCoordinates, prevCoordinates, isFromAbove)
     return nodes
 
     /*
@@ -47,85 +50,80 @@ function getPositions(tree){
     it inserts a new object with the coordinates of the node to the array nodes
     this array will be the data to use with d3 to draw both nodes and edges
     */
-    function localGetPositions(pointer, currCoordinates, prevCoordinates){
-        console.log("new Call.\n pointer: " + pointer.toString() + ".\n current:" + currCoordinates.toString() + ".\n previous: " + prevCoordinates.toString())
-        /*
-        LEFT CHILD TRAVERSAL
-        */
 
-        /*
-        returns true if the current node collides with a horizontal edge, that is:
-        if the current node is at least to the left of a ledge node
-        and it is also at least lower than that ledge node
-        */
+    function localGetPositions(pointer, currCoordinates, prevCoordinates, isFromAbove){
 
-        const doesCollide = (ledge) => 
-            currCoordinates[0] <= ledge[0] &&
-            currCoordinates[1] >= ledge[1]
+      if(pointer === null){
+        throw {name: "NullNodeException", message: "Entered a null node"}
+      }
+      
+      //returns true if the current node collides with an existing edge
+      function doesCollide(ledge){
+        return currCoordinates[0] <= ledge[0] && currCoordinates[1] >= ledge[1]
+      }
 
-        const isFurtherRight = (ledge) =>
-            (ledge[0] < currCoordinates[0]) ||
-            (ledge[0] <= prevCoordinates[0] && ledge[1] <= prevCoordinates[1])
-
-        let ledges = globalLedges.filter(isFurtherRight)
-        console.log("ledges: " + ledges.toString())
-
-        if(ledges.some(doesCollide)){
-          console.log("collision")
-          console.log(ledges, currCoordinates)
-          return -1
+      //if a collision occurs throw a CollisionException
+      if(isFromAbove && globalLedges.some(doesCollide)){
+        let collision = globalLedges.filter(doesCollide)
+        throw {
+          name: "CollisionException",
+          message: "node: ".concat(pointer.val.toString()).concat("\ncollision: ").concat(collision.toString()).concat(currCoordinates.toString())
         }
+      }
 
-        if(pointer.left !== null){
-            console.log("entering left")
-            prev = currCoordinates
-            curr = [currCoordinates[0], currCoordinates[1] + 1]
-            let forward = localGetPositions(pointer.left, curr, prev)
-            if(forward === -1){
-              return -1
+      //Exploring left side of the tree
+      if(pointer.left !== null){
+        try{
+          let curr = [currCoordinates[0], currCoordinates[1] + 1]
+          let prev = currCoordinates
+          localGetPositions(pointer.left, curr, prev, true) //true because we are traversing downward
+        }
+        catch(e){
+          if(e.name === "CollisionException"){
+            console.log("going back upward")
+            throw e
+          }
+          else{
+            throw e
+          }
+        }
+      }
+
+      //Confirming node position
+      let node = {
+        label: pointer.val,
+        current: currCoordinates,
+        previous: prevCoordinates
+      }
+
+      nodes.push(node)
+
+      //if the confirmed node comes from left, its coordinates are added to globalLedges
+      if(!isFromAbove){
+        globalLedges.push(currCoordinates)
+      }
+
+      //Exploring right side of the tree
+      if(pointer.right !== null){
+        let rightJumps = 1
+        let prev = currCoordinates
+        while(true){
+          try{
+            let curr = [currCoordinates[0] + rightJumps, currCoordinates[1]]
+            localGetPositions(pointer.right, curr, prev, false)
+          }
+          catch(e){
+            if(e.name === "CollisionException"){
+              rightJumps++
+              continue
             }
+          }
+          break
         }
+      }
 
-        /*CONFIRMING NODE POSITION*/
+      return
 
-        node = {
-            label: pointer.val,
-            prevCoordinates: prevCoordinates,
-            currCoordinates: currCoordinates
-        }
-
-        nodes.unshift(node)
-
-        /*
-        LEFT CHILD COMPUTATION
-        */
-
-        if(pointer.right !== null){
-            console.log("entering right")
-            prev = currCoordinates
-            i = 1
-            curr = [currCoordinates[0] + 1, currCoordinates[1]]
-            globalLedges.push(curr)
-            /*
-            while the left subtree collides with an already placed edge or node,
-            it moves his rootnode one to the right and tries again
-            */
-            let forward = localGetPositions(pointer.right, curr, prev)
-            console.log(forward)
-            while(forward === -1){
-                console.log("forward:" + forward)
-                console.log(curr)
-                i++
-                curr = [currCoordinates[0] + i, currCoordinates[1]]
-                globalLedges.pop()
-                globalLedges.push(curr)
-                forward = localGetPositions(pointer.right, curr, prev)
-                if(i >= 50) break
-            }
-        }
-
-        console.log(1)
-        return 1
     }
     
 }
