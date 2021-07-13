@@ -1,3 +1,5 @@
+const default_radius = 12
+const default_multiplier = 100
 const width = 600;
 const height = 450;
 const margin = 50;
@@ -10,12 +12,71 @@ let svg = d3.select("div.draw")
 d3.select("button.submitter")
   .on("click",draw)
 
+function drawEdge(context, start, end, xMultiplier, yMultiplier){
+  let [sX, sY] = start
+  let [eX, eY] = end
+  console.log(sX, sY, eX, eY)
+  context.moveTo(sX * xMultiplier + margin, sY * yMultiplier + margin)
+  context.lineTo(eX * xMultiplier + margin, eY * yMultiplier + margin)
+  return context.toString()
+}
+
+function getExtremities(positions){
+  let coordinates = positions.map((e) => e.current)
+  let xs = coordinates.map((e) => e[0])
+  let ys = coordinates.map((e) => e[1])
+  let maxX = d3.max(xs)
+  let maxY = d3.max(ys)
+  return [maxX, maxY]
+}
+
 function draw(){
-  let value = d3.select("input.deserializer")._groups[0][0].value
-  //console.log(value)
-  let tree = deserialize(value.split(" "))
-  console.log(tree)
-  console.log(getPositions(tree))
+  svg.selectAll("path").remove()
+  svg.selectAll("circle").remove()
+  d3.select(".alert").remove()
+  let value = d3.select("input.deserializer")._groups[0][0].value.trim()
+  let tree = deserialize(value.split("-"))
+  if(tree === null || value === ""){
+    d3.select("div.header")
+    .append("div")
+    .attr("class", "alert")
+    .text("INVALID INPUT")
+  }
+  let positions = getPositions(tree)
+  let [maxX, maxY] = getExtremities(positions)
+  let xMultiplier = default_multiplier
+  let yMultiplier = default_multiplier
+  if(maxX * default_multiplier >= width - (margin * 2)){
+    xMultiplier = (width - (margin * 2)) / maxX
+  }
+  if(maxY * default_multiplier >= height - (margin * 2)){
+    yMultiplier = (height - (margin * 2)) / maxY
+  }
+  let edges = svg.selectAll("path")
+              .data(positions)
+              .enter()
+              .append("path")
+              .style("stroke", "black")
+              .style("stroke-width", "2px")
+              .attr("d", function(e){
+                let path = d3.path()
+                return drawEdge(path, e.previous, e.current, xMultiplier, yMultiplier)
+              })
+
+  let nodes = svg.selectAll("circle")
+              .data(positions)
+              .enter()
+              .append("circle")
+              .style("stroke", "black")
+              .style("fill", "gray")
+              .attr("cx", (e) => e.current[0] * xMultiplier + margin)
+              .attr("cy", (e) => e.current[1] * yMultiplier + margin)
+              .attr("r", default_radius)
+              .append("text")
+              .attr("text-anchor", "right")
+              .style("font-size", default_radius / 1.1)
+              .style("fill", "black")
+              .text((e) => e.label)
 }
 
 
