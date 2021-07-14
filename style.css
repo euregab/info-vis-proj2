@@ -15,5 +15,15 @@ div.draw {
 svg {
     display: block;
     margin: auto;
-    background: lightpink;
+    background: white;
+}
+
+circle {
+    fill: salmon;
+    stroke: black;
+}
+
+path {
+    stroke: black;
+    stroke-width: 2px;
 }

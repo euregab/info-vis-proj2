@@ -32,7 +32,7 @@ function getExtremities(positions){
 
 function draw(){
   svg.selectAll("path").remove()
-  svg.selectAll("circle").remove()
+  svg.selectAll("g.node").remove()
   d3.select(".alert").remove()
   let value = d3.select("input.deserializer")._groups[0][0].value.trim()
   let tree = deserialize(value.split("-"))
@@ -40,6 +40,7 @@ function draw(){
     d3.select("div.header")
     .append("div")
     .attr("class", "alert")
+    .style("fill", "red")
     .text("INVALID INPUT")
   }
   let positions = getPositions(tree)
@@ -56,27 +57,37 @@ function draw(){
               .data(positions)
               .enter()
               .append("path")
-              .style("stroke", "black")
-              .style("stroke-width", "2px")
+              //.style("stroke", "black")
+              //.style("stroke-width", "4px")
               .attr("d", function(e){
                 let path = d3.path()
                 return drawEdge(path, e.previous, e.current, xMultiplier, yMultiplier)
               })
 
-  let nodes = svg.selectAll("circle")
+  let nodes = svg.selectAll("g.node")
               .data(positions)
               .enter()
-              .append("circle")
-              .style("stroke", "black")
-              .style("fill", "gray")
-              .attr("cx", (e) => e.current[0] * xMultiplier + margin)
-              .attr("cy", (e) => e.current[1] * yMultiplier + margin)
-              .attr("r", default_radius)
-              .append("text")
-              .attr("text-anchor", "right")
-              .style("font-size", default_radius / 1.1)
-              .style("fill", "black")
-              .text((e) => e.label)
+              .append("g")
+              .attr("class", "node")
+              .attr("transform", function(e){
+                return "translate(" +
+                (e.current[0] * xMultiplier + margin).toString() +
+                ", " +
+                (e.current[1] * yMultiplier + margin).toString() +
+                ")"
+              }) 
+
+  nodes.append("circle")
+      //.style("stroke", "black")
+      //.style("fill", "sandybrown")
+      .attr("r", default_radius)
+
+  nodes.append("text")
+      .attr("text-anchor", "middle")
+      .attr("dominant-baseline", "middle")
+      .style("font-size", default_radius / 1.1)
+      .style("fill", "black")
+      .text((e) => e.label)
 }
 
 
