@@ -9,7 +9,8 @@ The visualization part uses the __D3.js__ library to draw based on the results o
 * Start an HTTP server in the directory that contains files _index.html_, _style.css_ and _hv-bin-tree.js_ (example: `python3 -m http.server 8888`)
 * Open a web browser and go to _localhost_ (you may have to specify the port. in this example it is _8888_)
 * Type a binary tree as a string (example: `A-B-C-D-E-F-G`)
-* Type an option from the following:
+* You can also import a tree as a text file input
+* Select an option from the following:
     * _alternate-hv_ (default)
     * _alternate-vh_
     * _fixed-h_
