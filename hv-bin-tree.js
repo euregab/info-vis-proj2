@@ -1,7 +1,7 @@
-const default_radius = 12
-const default_multiplier = 100
-const width = 600;
-const height = 450;
+const default_radius = 10
+const default_multiplier = 75
+const width = 800;
+const height = 600;
 const margin = 50;
 
 let svg = d3.select("div.draw")
@@ -9,8 +9,57 @@ let svg = d3.select("div.draw")
     .attr("width", width)
     .attr("height", height)
 
-d3.select("button.submitter")
-  .on("click",draw)
+document.getElementById("submitter")
+  .addEventListener("click",draw)
+
+let input = document.getElementById("inputfile")
+
+input.addEventListener("change", function(){
+  d3.select(".alert").remove()
+  let fr = new FileReader()
+  const file = input.files[0]
+  const textType = /text.*/
+  
+  if(file.type.match(textType)){
+    fr.onload = function(event){
+      const file = event.target.result
+      let tree = null
+      serializedTree = null
+      try{
+        tree = JSON.parse(file)
+        serializedTree = serialize(tree)
+      }
+      catch(e){
+        document.getElementById("deserializer").value = ""
+        d3.select("div.header")
+          .append("div")
+          .attr("class", "alert")
+          .style("fill", "red")
+          .text("ERROR IN READING FILE")
+      }
+      document.getElementById("deserializer").value = serializedTree
+    }
+
+    fr.onerror = function(e){
+      document.getElementById("deserializer").value = ""
+      d3.select("div.header")
+        .append("div")
+        .attr("class", "alert")
+        .style("fill", "red")
+        .text("ERROR IN READING FILE")
+    } 
+
+    fr.readAsText(file)
+  }
+  else{
+    document.getElementById("deserializer").value = ""
+    d3.select("div.header")
+      .append("div")
+      .attr("class", "alert")
+      .style("fill", "red")
+      .text("INVALID FILE")
+  }
+})
 
 function drawEdge(context, start, end, xMultiplier, yMultiplier){
   let [sX, sY] = start
@@ -34,8 +83,8 @@ function draw(){
   svg.selectAll("path").remove()
   svg.selectAll("g.node").remove()
   d3.select(".alert").remove()
-  let value = d3.select("input.deserializer")._groups[0][0].value.trim()
-  let opt = d3.select("input.option")._groups[0][0].value.trim()
+  let value = document.getElementById("deserializer").value.trim()
+  let opt = document.getElementById("option").value
   let arr = value.split("-").map(function(e){
     if (e === "") return null
     else return e
@@ -62,6 +111,8 @@ function draw(){
   if(maxY * default_multiplier >= height - (margin * 2)){
     yMultiplier = (height - (margin * 2)) / maxY
   }
+  //FOR CONSTANT EDGES
+  [xMultiplier, yMultiplier] = [Math.min(xMultiplier, yMultiplier), Math.min(xMultiplier, yMultiplier)]
   let edges = svg.selectAll("path")
               .data(positions)
               .enter()
@@ -399,35 +450,23 @@ class TreeNode {
    * @param {TreeNode} root
    * @return {string}
    */
-  const serialize = root => {
-    if (!root) {
-      return null;
-    }
+   function serialize(tree){
+    var arr = [];
+    innerSerialize(tree, arr);
+    return arr.join("-");
   
-    const data = [];
-  
-    // Level-order traversal
-    const queue = [root];
-    while (queue.length > 0) {
-      const node = queue.shift();
-  
-      if (node) {
-        data.push(node.val);
-  
-        queue.push(node.left);
-        queue.push(node.right);
+    function innerSerialize(tree, arr){
+  	  if(!tree){
+        arr.push(null);
       } else {
-        data.push(null);
+  	    arr.push(tree.val);
+        if(tree.left !== null || tree.right !== null){
+          innerSerialize(tree.left, arr);
+          innerSerialize(tree.right, arr);
+        }
       }
     }
-  
-    // Clean up the trailing nulls in data
-    while (data.length > 0 && data[data.length - 1] === null) {
-      data.pop();
-    }
-  
-    return JSON.stringify(data);
-  };
+  }
   
   /**
    * Decodes your encoded data to tree.

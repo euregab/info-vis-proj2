@@ -14,41 +14,28 @@
     }
   }
   
+  
   /**
    * Encodes a tree to a single string.
    *
    * @param {TreeNode} root
    * @return {string}
    */
-  const serialize = root => {
-    if (!root) {
-      return null;
-    }
+  function serialize(tree){
+    var arr = [];
+    innerSerialize(tree, arr);
+    return arr.join("-");
   
-    const data = [];
-  
-    // Level-order traversal
-    const queue = [root];
-    while (queue.length > 0) {
-      const node = queue.shift();
-  
-      if (node) {
-        data.push(node.val);
-  
-        queue.push(node.left);
-        queue.push(node.right);
+    function innerSerialize(tree, arr){
+  	  if(!tree){
+        arr.push(null);
       } else {
-        data.push(null);
+  	    arr.push(tree.val);
+        innerSerialize(tree.left, arr);
+        innerSerialize(tree.right, arr);
       }
     }
-  
-    // Clean up the trailing nulls in data
-    while (data.length > 0 && data[data.length - 1] === null) {
-      data.pop();
-    }
-  
-    return JSON.stringify(data);
-  };
+  }
   
   /**
    * Decodes your encoded data to tree.
